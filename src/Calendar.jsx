@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { DayPilot, DayPilotCalendar, DayPilotMonth } from "@daypilot/daypilot-lite-react";
+import { supabase } from "./supabaseClient.js";
 
 export default function Calendar() {
   const [view, setView] = useState("Week");
@@ -14,16 +15,47 @@ export default function Calendar() {
     },
   ]);
 
+  function isoToLocalNaive(iso) {
+    const d = new Date(iso); // parses UTC/offset correctly
+    const pad = (n) => String(n).padStart(2, "0");
+
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+          `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
   // ---- Modal state ----
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [apptTitle, setApptTitle] = useState("Nueva cita");
   const [apptDate, setApptDate] = useState(startDate.toString("yyyy-MM-dd"));
   const [apptStart, setApptStart] = useState(null); // "HH:mm"
-  const [apptEnd, setApptEnd] = useState(null);     // "HH:mm"
+  const [apptEnd, setApptEnd] = useState(null); // "HH:mm"
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("id, title, start_time, end_time")
+        .order("start_time", { ascending: true });
+
+      if (error) {
+        console.error("Load appointments error:", error);
+        return;
+      }
+
+      setEvents(
+        (data ?? []).map((row) => ({
+          id: row.id,
+          text: row.title,
+          start: isoToLocalNaive(row.start_time),
+          end: isoToLocalNaive(row.end_time),
+        }))
+      );
+    })();
+  }, []);
 
   // Business hours (change if you want)
-  const BUSINESS_START = 8;  // 08:00
-  const BUSINESS_END = 20;   // 20:00 (last start slot is 19:30)
+  const BUSINESS_START = 8; // 08:00
+  const BUSINESS_END = 20; // 20:00 (last start slot is 19:30)
 
   const timeSlots = useMemo(() => {
     const slots = [];
@@ -35,7 +67,6 @@ export default function Calendar() {
   }, []);
 
   function toDpDate(dateStr, timeStr) {
-    // dateStr: "yyyy-MM-dd", timeStr: "HH:mm"
     return new DayPilot.Date(`${dateStr}T${timeStr}:00`);
   }
 
@@ -66,7 +97,6 @@ export default function Calendar() {
   }
 
   function startSlotEnabled(slot) {
-    // A start slot is enabled if there exists at least one end slot later that creates a conflict-free range
     const idx = timeSlots.indexOf(slot);
     if (idx === -1) return false;
 
@@ -87,7 +117,7 @@ export default function Calendar() {
 
   function openNuevaCita() {
     setApptTitle("Nueva cita");
-    setApptDate(startDate.toString("yyyy-MM-dd")); // default to the currently selected day in the calendar
+    setApptDate(startDate.toString("yyyy-MM-dd"));
     setApptStart(null);
     setApptEnd(null);
     setIsModalOpen(true);
@@ -97,143 +127,89 @@ export default function Calendar() {
     setIsModalOpen(false);
   }
 
-  function saveAppointment() {
+  function moveRange(direction) {
+  // direction: -1 (left arrow), +1 (right arrow)
+
+    setStartDate((prev) => {
+      if (view === "Day") {
+        return prev.addDays(1 * direction);
+      }
+      if (view === "Week") {
+        return prev.addDays(7 * direction);
+      }
+      // Month
+      return prev.firstDayOfMonth().addMonths(1 * direction);
+    });
+  }
+
+  async function saveAppointment() {
     if (!apptStart || !apptEnd) return;
     if (!isRangeFree(apptDate, apptStart, apptEnd)) return;
 
-    const start = toDpDate(apptDate, apptStart);
-    const end = toDpDate(apptDate, apptEnd);
+    // Use browser-local time -> store as ISO (UTC) in DB
+    const startISO = new Date(`${apptDate}T${apptStart}:00`).toISOString();
+    const endISO = new Date(`${apptDate}T${apptEnd}:00`).toISOString();
+
+    // If you used Option A (Auth + RLS), you MUST include user_id:
+    // const { data: userResp } = await supabase.auth.getUser();
+    // const userId = userResp?.user?.id;
+
+    const payload = {
+      title: apptTitle?.trim() || "Nueva cita",
+      start_time: startISO,
+      end_time: endISO,
+      // user_id: userId, // <- enable if using Auth+RLS
+    };
+
+    const { data, error } = await supabase
+      .from("appointments")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Insert appointment error:", error);
+      return;
+    }
 
     setEvents((prev) => [
       ...prev,
       {
-        id: DayPilot.guid(),
-        text: apptTitle?.trim() || "Nueva cita",
-        start,
-        end,
+        id: data.id,
+        text: data.title,
+        start: isoToLocalNaive(data.start_time),
+        end: isoToLocalNaive(data.end_time),
       },
     ]);
 
     setIsModalOpen(false);
   }
 
-  const canSave =
-    !!apptStart &&
-    !!apptEnd &&
-    endSlotEnabled(apptEnd); // also implies no overlap
-
-  // ---- Styles (inline to keep it simple) ----
-  const styles = {
-    toolbar: {
-      display: "flex",
-      justifyContent: "flex-end",
-      gap: 10,
-      marginBottom: 10,
-      alignItems: "center",
-    },
-    timeSelectionContainer: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr", // Side-by-side
-      gap: 20,
-      marginBottom: 10,
-    },
-    toolbarGroup: { display: "flex", gap: 8 },
-    modalBackdrop: {
-      height: "100%",
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.45)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 9999,
-      padding: 16,
-    },
-    modal: {
-      width: "min(720px, 96vw)",
-      maxHeight: "90vh",      /* Keep it within 90% of screen height */
-      overflowY: "auto",      /* Enable scrollbar if content is too tall */
-      background: "#fff",
-      borderRadius: 12,
-      padding: 16,
-      boxShadow: "0 20px 80px rgba(0,0,0,0.3)",
-      position: "relative",   /* Good practice */
-    },
-    modalHeader: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 12,
-    },
-    grid2: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12,
-      marginBottom: 8, // Tighter margin
-    },
-    field: { display: "flex", flexDirection: "column", gap: 6 },
-    label: { fontSize: 12, color: "#444" },
-    input: {
-      padding: "10px 12px",
-      borderRadius: 10,
-      border: "1px solid #ddd",
-      outline: "none",
-    },
-    sectionTitle: { fontWeight: 700, margin: "10px 0 6px" },
-    slotsGrid: {
-      display: "grid",
-      gridTemplateColumns: "repeat(4, minmax(0, 1fr))", // 4 cols because they are side-by-side now
-      gap: 4,
-    },
-    slotBtn: (enabled, selected) => ({
-      padding: "6px 4px", // Smaller padding
-      borderRadius: 8,
-      border: "1px solid #ddd",
-      cursor: enabled ? "pointer" : "not-allowed",
-      background: selected ? "#111" : enabled ? "#fff" : "#e5e7eb",
-      color: selected ? "#fff" : "#111",
-      fontSize: "11px", // Smaller font
-    }),
-    footer: {
-      display: "flex",
-      justifyContent: "flex-end",
-      gap: 10,
-      marginTop: 14,
-    },
-    primary: (enabled) => ({
-      padding: "10px 14px",
-      borderRadius: 10,
-      border: 0,
-      cursor: enabled ? "pointer" : "not-allowed",
-      background: enabled ? "#2563eb" : "#93c5fd",
-      color: "#fff",
-      fontWeight: 700,
-    }),
-    secondary: {
-      padding: "10px 14px",
-      borderRadius: 10,
-      border: "1px solid #ddd",
-      background: "#fff",
-      cursor: "pointer",
-      fontWeight: 600,
-    },
-    legend: { display: "flex", gap: 10, alignItems: "center", fontSize: 12, color: "#444", marginTop: 10 },
-    swatch: (bg) => ({ width: 14, height: 14, borderRadius: 4, background: bg, border: "1px solid #ddd" }),
-  };
+  const canSave = !!apptStart && !!apptEnd && endSlotEnabled(apptEnd);
 
   return (
-    <div style={{
-      height: "100vh",      /* Take up full screen height */
-      display: "flex",      /* Enable flexbox */
-      flexDirection: "column", 
-      padding: "10px", 
-      boxSizing: "border-box"
-    }}>
-      <div className="toolbar" style={styles.toolbar}>
-        <div className="toolbar-group" style={styles.toolbarGroup}>
-          <button onClick={() => setView("Day")} className={view === "Day" ? "selected" : ""}>Day</button>
-          <button onClick={() => setView("Week")} className={view === "Week" ? "selected" : ""}>Week</button>
-          <button onClick={() => setView("Month")} className={view === "Month" ? "selected" : ""}>Month</button>
+    <div className="calendar-page">
+      <div className="toolbar">
+        <div className="toolbar-left">
+          <button className="nav-arrow" onClick={() => moveRange(-1)} aria-label="Previous">
+            ◀
+          </button>
+
+          <div className="toolbar-group">
+            <button onClick={() => setView("Day")} className={view === "Day" ? "selected" : ""}>
+              Day
+            </button>
+            <button onClick={() => setView("Week")} className={view === "Week" ? "selected" : ""}>
+              Week
+            </button>
+            <button onClick={() => setView("Month")} className={view === "Month" ? "selected" : ""}>
+              Month
+            </button>
+          </div>
+
+          <button className="nav-arrow" onClick={() => moveRange(1)} aria-label="Next">
+            ▶
+          </button>
         </div>
 
         <button onClick={openNuevaCita} className="new-appointment">
@@ -241,9 +217,8 @@ export default function Calendar() {
         </button>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0 }}> {/* This wrapper forces the calendar to fill the space */}
-
-      {/* Day */}
+      <div className="calendar-content">
+        {/* Day */}
         <DayPilotCalendar
           viewType="Day"
           visible={view === "Day"}
@@ -252,7 +227,6 @@ export default function Calendar() {
           width="100%"
           allowEventOverlap={false}
           onDateSelected={(args) => setStartDate(args.date)}
-          
         />
 
         {/* Week */}
@@ -275,67 +249,78 @@ export default function Calendar() {
           allowEventOverlap={false}
           onDateSelected={(args) => setStartDate(args.date)}
           heightSpec="Parent100Pct"
-          
         />
       </div>
+
       {/* ---- Custom Modal ---- */}
       {isModalOpen && (
-        <div style={styles.modalBackdrop} onClick={closeModal}>
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            {/* Header and Inputs remain similar but tighter */}
-            <div style={styles.modalHeader}>
-              <div style={{ fontWeight: 800, fontSize: 16 }}>Nueva cita</div>
-              <button style={styles.secondary} onClick={closeModal}>X</button>
+        <div className="modal-backdrop" onClick={closeModal}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">Nueva cita</div>
+              <button className="btn-secondary" onClick={closeModal}>
+                X
+              </button>
             </div>
 
-            <div style={styles.grid2}>
-              <div style={styles.field}>
-                <div style={styles.label}>Título</div>
-                <input style={styles.input} value={apptTitle} onChange={(e) => setApptTitle(e.target.value)} />
+            <div className="grid2">
+              <div className="field">
+                <div className="label">Paciente</div>
+                <input className="input" value={apptTitle} onChange={(e) => setApptTitle(e.target.value)} />
               </div>
-              <div style={styles.field}>
-                <div style={styles.label}>Día</div>
-                <input style={styles.input} type="date" value={apptDate} onChange={(e) => setApptDate(e.target.value)} />
+              <div className="field">
+                <div className="label">Día</div>
+                <input className="input" type="date" value={apptDate} onChange={(e) => setApptDate(e.target.value)} />
               </div>
             </div>
 
-            {/* NEW: Side-by-Side Grids */}
-            <div style={styles.timeSelectionContainer}>
+            <div className="timeSelectionContainer">
               <div>
-                <div style={styles.sectionTitle}>Inicio</div>
-                <div style={styles.slotsGrid}>
-                  {timeSlots.map((slot) => (
-                    <button 
-                      key={slot} 
-                      style={styles.slotBtn(startSlotEnabled(slot), apptStart === slot)}
-                      onClick={() => { setApptStart(slot); setApptEnd(null); }}
-                    >
-                      {slot}
-                    </button>
-                  ))}
+                <div className="sectionTitle">Inicio</div>
+                <div className="slotsGrid">
+                  {timeSlots.map((slot) => {
+                    const enabled = startSlotEnabled(slot);
+                    const selected = apptStart === slot;
+                    const cls = `slotBtn${enabled ? "" : " disabled"}${selected ? " selected" : ""}`;
+
+                    return (
+                      <button
+                        key={slot}
+                        className={cls}
+                        onClick={() => {
+                          setApptStart(slot);
+                          setApptEnd(null);
+                        }}
+                      >
+                        {slot}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <div>
-                <div style={styles.sectionTitle}>Fin</div>
-                <div style={styles.slotsGrid}>
-                  {timeSlots.map((slot) => (
-                    <button 
-                      key={slot} 
-                      style={styles.slotBtn(endSlotEnabled(slot), apptEnd === slot)}
-                      onClick={() => setApptEnd(slot)}
-                    >
-                      {slot}
-                    </button>
-                  ))}
+                <div className="sectionTitle">Fin</div>
+                <div className="slotsGrid">
+                  {timeSlots.map((slot) => {
+                    const enabled = endSlotEnabled(slot);
+                    const selected = apptEnd === slot;
+                    const cls = `slotBtn${enabled ? "" : " disabled"}${selected ? " selected" : ""}`;
+
+                    return (
+                      <button key={slot} className={cls} onClick={() => setApptEnd(slot)}>
+                        {slot}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
-            {/* Legend and Footer stay at the bottom */}
-            <div style={styles.legend}>...</div>
-            <div style={styles.footer}>
-              <button style={styles.primary(canSave)} onClick={saveAppointment} disabled={!canSave}>
+            <div className="legend">...</div>
+
+            <div className="footer">
+              <button className={`btn-primary${canSave ? "" : " disabled"}`} onClick={saveAppointment} disabled={!canSave}>
                 Guardar
               </button>
             </div>
