@@ -5,6 +5,11 @@ import { supabase } from "./supabaseClient.js";
 export default function Calendar() {
   const [view, setView] = useState("Week");
   const [startDate, setStartDate] = useState(DayPilot.Date.today());
+  const handleEventClick = (args) => {
+    args.preventDefault?.();          // stops default click behavior
+    console.log("Event clicked:", args.e.data);
+    openEditModalFromEvent(args.e);
+  };
 
   const [events, setEvents] = useState([
     {
@@ -29,6 +34,7 @@ export default function Calendar() {
   const [apptDate, setApptDate] = useState(startDate.toString("yyyy-MM-dd"));
   const [apptStart, setApptStart] = useState(null); // "HH:mm"
   const [apptEnd, setApptEnd] = useState(null); // "HH:mm"
+  const [editingId, setEditingId] = useState(null); // null = creating, otherwise editing existing appointment
 
   useEffect(() => {
     (async () => {
@@ -87,12 +93,12 @@ export default function Calendar() {
       .filter((e) => overlaps(dayStart, dayEnd, e.startDp, e.endDp));
   }
 
-  function isRangeFree(dateStr, startTime, endTime) {
+  function isRangeFree(dateStr, startTime, endTime, ignoreId = null) {
     const s = toDpDate(dateStr, startTime);
     const e = toDpDate(dateStr, endTime);
     if (!(e > s)) return false;
 
-    const existing = dayEvents(dateStr);
+    const existing = dayEvents(dateStr).filter((ev) => ev.id !== ignoreId);
     return !existing.some((ev) => overlaps(s, e, ev.startDp, ev.endDp));
   }
 
@@ -102,7 +108,7 @@ export default function Calendar() {
 
     for (let j = idx + 1; j < timeSlots.length; j++) {
       const endSlot = timeSlots[j];
-      if (isRangeFree(apptDate, slot, endSlot)) return true;
+      if (isRangeFree(apptDate, slot, endSlot, editingId)) return true;
     }
     return false;
   }
@@ -112,10 +118,11 @@ export default function Calendar() {
     const startIdx = timeSlots.indexOf(apptStart);
     const endIdx = timeSlots.indexOf(slot);
     if (endIdx <= startIdx) return false;
-    return isRangeFree(apptDate, apptStart, slot);
+    return isRangeFree(apptDate, apptStart, slot, editingId);
   }
 
   function openNuevaCita() {
+    setEditingId(null);
     setApptTitle("Nueva cita");
     setApptDate(startDate.toString("yyyy-MM-dd"));
     setApptStart(null);
@@ -125,6 +132,7 @@ export default function Calendar() {
 
   function closeModal() {
     setIsModalOpen(false);
+    setEditingId(null);
   }
 
   function moveRange(direction) {
@@ -144,23 +152,51 @@ export default function Calendar() {
 
   async function saveAppointment() {
     if (!apptStart || !apptEnd) return;
-    if (!isRangeFree(apptDate, apptStart, apptEnd)) return;
+    if (!isRangeFree(apptDate, apptStart, apptEnd, editingId)) return;
 
-    // Use browser-local time -> store as ISO (UTC) in DB
     const startISO = new Date(`${apptDate}T${apptStart}:00`).toISOString();
     const endISO = new Date(`${apptDate}T${apptEnd}:00`).toISOString();
-
-    // If you used Option A (Auth + RLS), you MUST include user_id:
-    // const { data: userResp } = await supabase.auth.getUser();
-    // const userId = userResp?.user?.id;
 
     const payload = {
       title: apptTitle?.trim() || "Nueva cita",
       start_time: startISO,
       end_time: endISO,
-      // user_id: userId, // <- enable if using Auth+RLS
+      // user_id: userId, // only if your RLS policies require it
     };
 
+    // EDIT existing
+    if (editingId) {
+      const { data, error } = await supabase
+        .from("appointments")
+        .update(payload)
+        .eq("id", editingId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Update appointment error:", error);
+        return;
+      }
+
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.id === editingId
+            ? {
+                ...e,
+                text: data.title,
+                start: isoToLocalNaive(data.start_time),
+                end: isoToLocalNaive(data.end_time),
+              }
+            : e
+        )
+      );
+
+      setIsModalOpen(false);
+      setEditingId(null);
+      return;
+    }
+
+    // CREATE new
     const { data, error } = await supabase
       .from("appointments")
       .insert(payload)
@@ -174,18 +210,61 @@ export default function Calendar() {
 
     setEvents((prev) => [
       ...prev,
-      {
-        id: data.id,
-        text: data.title,
-        start: isoToLocalNaive(data.start_time),
-        end: isoToLocalNaive(data.end_time),
-      },
+      { id: data.id, text: data.title, start: isoToLocalNaive(data.start_time), end: isoToLocalNaive(data.end_time) },
     ]);
 
     setIsModalOpen(false);
   }
 
+  
+
   const canSave = !!apptStart && !!apptEnd && endSlotEnabled(apptEnd);
+
+  function dpToLocalParts(value) {
+    // value can be string or DayPilot.Date
+    const s = typeof value === "string"
+      ? value
+      : value.toString("yyyy-MM-ddTHH:mm:ss"); // DayPilot.Date -> string
+
+    return {
+      date: s.slice(0, 10),      // "YYYY-MM-DD"
+      time: s.slice(11, 16),     // "HH:mm"
+    };
+  }
+
+  function openEditModalFromEvent(dpEvent) {
+    const data = dpEvent.data;         // DayPilot.Event.data
+    const id = dpEvent.id();           // event id
+    const title = dpEvent.text();      // event text
+
+    const startParts = dpToLocalParts(data.start);
+    const endParts = dpToLocalParts(data.end);
+
+    setEditingId(id);
+    setApptTitle(title);
+    setApptDate(startParts.date);
+    setApptStart(startParts.time);
+    setApptEnd(endParts.time);
+    setIsModalOpen(true);
+  }
+
+  async function deleteAppointment() {
+    if (!editingId) return;
+
+    const { error } = await supabase
+      .from("appointments")
+      .delete()
+      .eq("id", editingId);
+
+    if (error) {
+      console.error("Delete appointment error:", error);
+      return;
+    }
+
+    setEvents((prev) => prev.filter((e) => e.id !== editingId));
+    setIsModalOpen(false);
+    setEditingId(null);
+  }
 
   return (
     <div className="calendar-page">
@@ -225,30 +304,28 @@ export default function Calendar() {
           startDate={startDate}
           events={events}
           width="100%"
-          allowEventOverlap={false}
-          onDateSelected={(args) => setStartDate(args.date)}
+          eventClickHandling="Enabled"
+          onEventClick={handleEventClick}
         />
 
-        {/* Week */}
         <DayPilotCalendar
           viewType="Week"
           visible={view === "Week"}
           startDate={startDate}
           events={events}
           width="100%"
-          allowEventOverlap={false}
-          onDateSelected={(args) => setStartDate(args.date)}
+          eventClickHandling="Enabled"
+          onEventClick={handleEventClick}
         />
 
-        {/* Month */}
         <DayPilotMonth
           visible={view === "Month"}
           startDate={startDate}
           events={events}
           width="100%"
-          allowEventOverlap={false}
-          onDateSelected={(args) => setStartDate(args.date)}
           heightSpec="Parent100Pct"
+          eventClickHandling="Enabled"
+          onEventClick={handleEventClick}
         />
       </div>
 
@@ -320,8 +397,18 @@ export default function Calendar() {
             <div className="legend">...</div>
 
             <div className="footer">
-              <button className={`btn-primary${canSave ? "" : " disabled"}`} onClick={saveAppointment} disabled={!canSave}>
-                Guardar
+              {editingId && (
+                <button className="btn-danger" onClick={deleteAppointment}>
+                  Eliminar
+                </button>
+              )}
+
+              <button
+                className={`btn-primary${canSave ? "" : " disabled"}`}
+                onClick={saveAppointment}
+                disabled={!canSave}
+              >
+                {editingId ? "Guardar cambios" : "Guardar"}
               </button>
             </div>
           </div>

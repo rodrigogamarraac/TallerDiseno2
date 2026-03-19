@@ -262,3 +262,16 @@ button:focus-visible {
   cursor: pointer;
   font-weight: 600;
 }
+
+.btn-danger {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 0;
+  cursor: pointer;
+  background: #dc2626;
+  color: #fff;
+  font-weight: 700;
+}
+.btn-danger:hover {
+  filter: brightness(0.95);
+}
