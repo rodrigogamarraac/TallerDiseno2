@@ -3,10 +3,11 @@ export default function Inicio({ huespedes, reservas, servicios }) {
 
   return (
     <div>
-      <h2>Panel principal</h2>
-      <p>Prototipo simple del sistema de reservas del hotel.</p>
+      <h1>Gestion de Reservas para hotel</h1>
+      
 
       <div className="tarjetas-resumen">
+        {/*}
         <div className="tarjeta">
           <h3>Huéspedes</h3>
           <p>{huespedes.length}</p>
@@ -25,8 +26,13 @@ export default function Inicio({ huespedes, reservas, servicios }) {
         <div className="tarjeta">
           <h3>Servicios</h3>
           <p>{servicios.length}</p>
-        </div>
+        </div>*/}
+
       </div>
+      {/*<div>
+        <img src="../logos/hotelLogo.jpg"></img>
+      </div>*/}
+
     </div>
   );
 }

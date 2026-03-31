@@ -1,11 +1,11 @@
 function obtenerNombreHuesped(huespedes, id) {
-  const huesped = huespedes.find((h) => h.id === id);
-  return huesped ? huesped.nombreCompleto : "Sin huésped";
+  const huesped = huespedes.find((h) => h.id_huesped === id);
+  return huesped ? huesped.nombre_completo : "Sin huésped";
 }
 
 function obtenerNumeroHabitacion(habitaciones, id) {
-  const habitacion = habitaciones.find((h) => h.id === id);
-  return habitacion ? habitacion.numero : "Sin habitación";
+  const habitacion = habitaciones.find((h) => h.id_habitacion === id);
+  return habitacion ? habitacion.numero_habitacion : "Sin habitación";
 }
 
 export default function PantallaCheckIn({
@@ -27,17 +27,17 @@ export default function PantallaCheckIn({
       ) : (
         <div className="lista">
           {disponibles.map((r) => (
-            <div key={r.id} className="item-lista">
+            <div key={r.id_reserva} className="item-lista">
               <div>
-                <h3>{obtenerNombreHuesped(huespedes, r.huespedId)}</h3>
-                <p>Habitación: {obtenerNumeroHabitacion(habitaciones, r.habitacionId)}</p>
-                <p>Ingreso: {r.fechaIngreso}</p>
-                <p>Salida: {r.fechaSalida}</p>
+                <h3>{obtenerNombreHuesped(huespedes, r.id_huesped_titular)}</h3>
+                <p>Habitación: {obtenerNumeroHabitacion(habitaciones, r.id_habitacion)}</p>
+                <p>Ingreso: {r.fecha_ingreso}</p>
+                <p>Salida: {r.fecha_salida}</p>
               </div>
 
               <button
                 className="boton-principal"
-                onClick={() => onCheckIn(r.id)}
+                onClick={() => onCheckIn(r.id_reserva)}
               >
                 Hacer check-in
               </button>

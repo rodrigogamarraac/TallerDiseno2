@@ -46,7 +46,7 @@ export default function ListaReservas({
 
               <div>
                 <span className="estado">{r.estado}</span>
-                {r.hora_checkin && <p>Check-in: {r.hora_checkin}</p>}
+                {r.hora_checkin && <p>Check-in: {r.hora_checkin.split("T")[0]} a hora {r.hora_checkin.split("T")[1]}</p>}
               </div>
             </div>
           ))}

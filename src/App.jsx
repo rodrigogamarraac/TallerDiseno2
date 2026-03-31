@@ -6,20 +6,11 @@ import supabase from "./supabase";
 import Sidebar from "./components/Sidebar";
 import Inicio from "./components/Inicio";
 import FormularioHuesped from "./components/FormularioHuesped";
-
 import FormularioReserva from "./components/FormularioReserva";
 import ListaReservas from "./components/ListaReservas";
 import PantallaCheckIn from "./components/PantallaCheckIn";
 import PantallaServicios from "./components/PantallaServicios";
 import PantallaConsultarHuesped from "./components/PantallaConsultarHuesped";
-
-import {
-  //tiposIniciales,
-  //habitacionesIniciales,
-  serviciosIniciales,
-  //huespedesIniciales,
-  reservasIniciales,
-} from "./data/datosIniciales";
 
 export default function App() {
 
@@ -172,8 +163,8 @@ export default function App() {
       if (r.estado === "Cancelada") return false;
 
       return (
-        nuevaReserva.fechaIngreso < r.fechaSalida &&
-        nuevaReserva.fechaSalida > r.fechaIngreso
+        nuevaReserva.fechaIngreso < r.fecha_salida &&
+        nuevaReserva.fechaSalida > r.fecha_ingreso
       );
     });
 
@@ -198,7 +189,7 @@ export default function App() {
       hora_checkout: null,
       id_habitacion: nuevaReserva.habitacionId,
       id_tipo_habitacion: nuevaReserva.tipoHabitacionId,
-      id_checkin: null,
+      // id_checkin: null,
       id_huesped_titular: nuevaReserva.huespedId
     }
 
@@ -224,8 +215,8 @@ export default function App() {
     setVista("reservas");
   }
 
-  function registrarCheckIn(idReserva) {
-    const reserva = reservas.find((r) => r.id === idReserva);
+  const registrarCheckIn = async(idReserva) => {
+    const reserva = reservas.find((r) => r.id_reserva === idReserva);
 
     if (!reserva) {
       alert("Reserva no encontrada.");
@@ -237,19 +228,36 @@ export default function App() {
       return;
     }
 
-    if (reserva.horaCheckIn) {
+    if (reserva.hora_checkin) {
       alert("La reserva ya tiene check-in registrado.");
       return;
     }
 
-    const actualizadas = reservas.map((r) =>
-      r.id === idReserva
+    /*const actualizadas = reservas.map((r) =>
+      r.id_reserva === idReserva
         ? {
             ...r,
-            horaCheckIn: new Date().toLocaleString(),
+            hora_checkin: new Date().toLocaleString(),
             estado: "En curso",
           }
         : r
+    );*/
+
+    const { data, error } = await supabase
+      .from('reserva')
+      .update({ hora_checkin: new Date().toISOString(), estado: "En curso" })
+      .eq('id_reserva', idReserva)
+      .select()
+      .single();
+
+    if(error){
+      console.log('Error al hacer checkin:', error);
+      alert("Error al hacer checkin.");
+      return;
+    }
+
+    const actualizadas = reservas.map((r) =>
+      r.id_reserva === idReserva ? data : r
     );
 
     setReservas(actualizadas);
