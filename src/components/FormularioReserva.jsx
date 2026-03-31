@@ -26,11 +26,12 @@ export default function FormularioReserva({
   }
 
   const tipoSeleccionado = tipos.find(
-    (t) => t.id === Number(formulario.tipoHabitacionId)
+    (t) => t.id_tipo_habitacion === Number(formulario.tipoHabitacionId)
   );
 
   const habitacionesFiltradas = habitaciones.filter(
-    (h) => h.tipoHabitacionId === Number(formulario.tipoHabitacionId)
+    //(h) => h.tipoHabitacionId === Number(formulario.tipoHabitacionId)
+    (h) => h.id_tipo_habitacion === Number(formulario.tipoHabitacionId)
   );
 
   function enviar(e) {
@@ -47,15 +48,15 @@ export default function FormularioReserva({
       return;
     }
 
-    onGuardar(formulario);
-    /*onGuardar({
+    //onGuardar(formulario);
+    onGuardar({
       huespedId: Number(formulario.huespedId),
       tipoHabitacionId: Number(formulario.tipoHabitacionId),
       habitacionId: Number(formulario.habitacionId),
       fechaIngreso: formulario.fechaIngreso,
       fechaSalida: formulario.fechaSalida,
       cantidadPersonas: Number(formulario.cantidadPersonas),
-    });*/
+    });
 
     setFormulario({
       huespedId: "",
@@ -97,7 +98,7 @@ export default function FormularioReserva({
           >
             <option value="">Seleccione</option>
             {tipos.map((t) => (
-              <option key={t.id} value={t.id}>
+              <option key={/*t.id*/t.id_tipo_habitacion} value={/*t.id*/t.id_tipo_habitacion}>
                 {t.nombre}
               </option>
             ))}
@@ -122,8 +123,9 @@ export default function FormularioReserva({
           >
             <option value="">Seleccione</option>
             {habitacionesFiltradas.map((h) => (
-              <option key={h.id} value={h.id}>
-                Habitación {h.numero}
+              <option key={h.id_habitacion} value={h.id_habitacion}>
+                Habitación {h.numero_habitacion}
+
               </option>
             ))}
           </select>

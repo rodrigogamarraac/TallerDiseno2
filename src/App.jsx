@@ -14,8 +14,8 @@ import PantallaServicios from "./components/PantallaServicios";
 import PantallaConsultarHuesped from "./components/PantallaConsultarHuesped";
 
 import {
-  tiposIniciales,
-  habitacionesIniciales,
+  //tiposIniciales,
+  //habitacionesIniciales,
   serviciosIniciales,
   //huespedesIniciales,
   reservasIniciales,
@@ -26,14 +26,17 @@ export default function App() {
   //const [listaHuespedes, setListaHuespedes] = useState([]);
   const [vista, setVista] = useState("inicio");
 
-  const [tipos] = useState(tiposIniciales);
-  const [habitaciones] = useState(habitacionesIniciales);
+  const [tipos, setTipos] = useState([]);
+  const [habitaciones, setHabitaciones] = useState([]);
   const [servicios] = useState(serviciosIniciales);
   const [huespedes, setHuespedes] = useState([]);
-  const [reservas, setReservas] = useState(reservasIniciales);
+  const [reservas, setReservas] = useState([]);
 
   useEffect(() => {
     fetchHuespedes();
+    fetchTipos();
+    fetchHabitaciones();
+    fetchReservas();
   }, []);
 
   const fetchHuespedes = async () => {
@@ -44,7 +47,46 @@ export default function App() {
       if(error){
         console.log('Error: ', error)
       }else{
-        setHuespedes([...data, ...huespedes]);
+        setHuespedes(data/*, ...huespedes*/);
+      }
+  }
+
+  const fetchTipos = async () => {
+    const { data, error } = await supabase
+      .from('tipo_habitacion')
+      .select("*")
+
+      if(error){
+        console.log('Error: ', error)
+      }else{
+        setTipos(data/*, ...tipos*/);
+        console.log('Tipos de habitación cargados:', data);
+      }
+  }
+
+  const fetchHabitaciones = async () => {
+    const { data, error } = await supabase
+      .from('habitacion')
+      .select("*")
+
+      if(error){
+        console.log('Error: ', error)
+      }else{
+        setHabitaciones(/*[...*/data/*, ...habitaciones]*/);
+        console.log('Habitaciones cargadas:', data);
+      }
+  }
+
+  const fetchReservas = async () => {
+    const { data, error } = await supabase
+      .from('reserva')
+      .select("*")
+
+      if(error){
+        console.log('Error: ', error)
+      }else{
+        setReservas(data);
+        console.log('Reservas cargadas:', data);
       }
   }
   
@@ -97,8 +139,9 @@ export default function App() {
     //setVista("consultarHuesped");
   }
 
-  function crearReserva(nuevaReserva) {
-    const tipo = tipos.find((t) => t.id === nuevaReserva.tipoHabitacionId);
+  const crearReserva = async(nuevaReserva) =>{
+
+    const tipo = tipos.find((t) => t.id_tipo_habitacion === nuevaReserva.tipoHabitacionId);
 
     if (nuevaReserva.fechaSalida <= nuevaReserva.fechaIngreso) {
       alert("La fecha de salida debe ser posterior a la fecha de ingreso.");
@@ -111,7 +154,7 @@ export default function App() {
     }
 
     const haySolapamiento = reservas.some((r) => {
-      if (r.habitacionId !== nuevaReserva.habitacionId) return false;
+      if (r.id_habitacion !== nuevaReserva.habitacionId) return false;
       if (r.estado === "Cancelada") return false;
 
       return (
@@ -125,15 +168,44 @@ export default function App() {
       return;
     }
 
-    const nueva = {
+    /*const nueva = {
       id: Date.now(),
       ...nuevaReserva,
       estado: "Reservada",
       horaCheckIn: "",
-    };
+    };*/
 
-    setReservas([...reservas, nueva]);
-    alert("Reserva registrada correctamente.");
+    const datosReserva = {
+      fecha_ingreso: nuevaReserva.fechaIngreso,
+      fecha_salida: nuevaReserva.fechaSalida,
+      cantidad_personas: nuevaReserva.cantidadPersonas,
+      estado: "Reservada",
+      hora_checkin: null,
+      hora_checkout: null,
+      id_habitacion: nuevaReserva.habitacionId,
+      id_tipo_habitacion: nuevaReserva.tipoHabitacionId,
+      id_checkin: null,
+    }
+
+    const { data, error } = await supabase
+    .from('reserva')
+    .insert([datosReserva])
+    .select()
+    .single()
+
+    console.log(datosReserva);
+    console.log(data);
+
+    if(error){
+      console.log('Error al cargar los datos de la reserva:', error);
+      alert("Error al registrar la reserva.");
+    }else{
+      setReservas([data, ...reservas]);
+      alert("Reserva registrada correctamente.");
+    }
+
+    // setReservas([...reservas, nueva]);
+    // alert("Reserva registrada correctamente.");
     setVista("reservas");
   }
 

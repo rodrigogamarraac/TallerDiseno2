@@ -1,15 +1,15 @@
 function obtenerNombreHuesped(huespedes, id) {
-  const huesped = huespedes.find((h) => h.id === id);
+  const huesped = huespedes.find((h) => h.id_huesped === id);
   return huesped ? huesped.nombreCompleto : "Sin huésped";
 }
 
 function obtenerNumeroHabitacion(habitaciones, id) {
-  const habitacion = habitaciones.find((h) => h.id === id);
+  const habitacion = habitaciones.find((h) => h.id_habitacion === id);
   return habitacion ? habitacion.numero : "Sin habitación";
 }
 
 function obtenerTipoHabitacion(tipos, id) {
-  const tipo = tipos.find((t) => t.id === id);
+  const tipo = tipos.find((t) => t.id_tipo_habitacion === id);
   return tipo ? tipo.nombre : "Sin tipo";
 }
 
@@ -22,8 +22,8 @@ export default function ListaReservas({
   const hoy = new Date().toISOString().split("T")[0];
 
   const reservasVisibles = reservas
-    .filter((r) => r.fechaSalida >= hoy)
-    .sort((a, b) => a.fechaIngreso.localeCompare(b.fechaIngreso));
+    .filter((r) => r.fecha_salida >= hoy)
+    .sort((a, b) => a.fecha_ingreso.localeCompare(b.fecha_ingreso));
 
   return (
     <div>
@@ -34,19 +34,19 @@ export default function ListaReservas({
       ) : (
         <div className="lista">
           {reservasVisibles.map((r) => (
-            <div key={r.id} className="item-lista">
+            <div key={r.id_reserva} className="item-lista">
               <div>
-                <h3>{obtenerNombreHuesped(huespedes, r.huespedId)}</h3>
-                <p>Habitación: {obtenerNumeroHabitacion(habitaciones, r.habitacionId)}</p>
-                <p>Tipo: {obtenerTipoHabitacion(tipos, r.tipoHabitacionId)}</p>
-                <p>Ingreso: {r.fechaIngreso}</p>
-                <p>Salida: {r.fechaSalida}</p>
-                <p>Personas: {r.cantidadPersonas}</p>
+                <h3>{obtenerNombreHuesped(huespedes, r.id_huesped)}</h3>
+                <p>Habitación: {obtenerNumeroHabitacion(habitaciones, r.id_habitacion)}</p>
+                <p>Tipo: {obtenerTipoHabitacion(tipos, r.id_tipo_habitacion)}</p>
+                <p>Ingreso: {r.fecha_ingreso}</p>
+                <p>Salida: {r.fecha_salida}</p>
+                <p>Personas: {r.cantidad_personas}</p>
               </div>
 
               <div>
                 <span className="estado">{r.estado}</span>
-                {r.horaCheckIn && <p>Check-in: {r.horaCheckIn}</p>}
+                {r.hora_checkin && <p>Check-in: {r.hora_checkin}</p>}
               </div>
             </div>
           ))}

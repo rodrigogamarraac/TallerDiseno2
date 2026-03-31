@@ -9,7 +9,7 @@ export const tiposIniciales = [
   {
     id: 2,
     nombre: "Suite",
-    descripcion: "1 cama king y espacio amplio",
+    descripcion: "1 cama king",
     capacidad: 2,
     precio: 250,
   },
