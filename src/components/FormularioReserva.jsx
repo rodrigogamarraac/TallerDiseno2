@@ -82,7 +82,7 @@ export default function FormularioReserva({
           >
             <option value="">Seleccione</option>
             {huespedes.map((h) => (
-              <option key={h.id} value={h.id}>
+              <option key={h.id_huesped} value={h.id_huesped}>
                 {h.nombre_completo}
               </option>
             ))}

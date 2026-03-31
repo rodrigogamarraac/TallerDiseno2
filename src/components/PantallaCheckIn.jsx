@@ -15,7 +15,7 @@ export default function PantallaCheckIn({
   onCheckIn,
 }) {
   const disponibles = reservas.filter(
-    (r) => r.estado !== "Cancelada" && !r.horaCheckIn
+    (r) => r.estado !== "Cancelada" && !r.hora_checkin
   );
 
   return (

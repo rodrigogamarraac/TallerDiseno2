@@ -1,6 +1,6 @@
 function obtenerNombreHuesped(huespedes, id) {
   const huesped = huespedes.find((h) => h.id_huesped === id);
-  return huesped ? huesped.nombreCompleto : "Sin huésped";
+  return huesped ? huesped.nombre_completo : "Sin huésped";
 }
 
 function obtenerNumeroHabitacion(habitaciones, id) {
@@ -36,7 +36,7 @@ export default function ListaReservas({
           {reservasVisibles.map((r) => (
             <div key={r.id_reserva} className="item-lista">
               <div>
-                <h3>{obtenerNombreHuesped(huespedes, r.id_huesped)}</h3>
+                <h3>Titular: {obtenerNombreHuesped(huespedes, r.id_huesped_titular)}</h3>
                 <p>Habitación: {obtenerNumeroHabitacion(habitaciones, r.id_habitacion)}</p>
                 <p>Tipo: {obtenerTipoHabitacion(tipos, r.id_tipo_habitacion)}</p>
                 <p>Ingreso: {r.fecha_ingreso}</p>

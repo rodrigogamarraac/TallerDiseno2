@@ -8,10 +8,10 @@ export default function PantallaServicios({ servicios }) {
       ) : (
         <div className="tarjetas-servicios">
           {servicios.map((s) => (
-            <div key={s.id} className="tarjeta">
-              <h3>{s.nombre}</h3>
-              <p><strong>Encargado:</strong> {s.encargado}</p>
-              <p><strong>Teléfono:</strong> {s.telefono}</p>
+            <div key={s.id_servicio} className="tarjeta">
+              <h3>{s.nombre_servicio}</h3>
+              <p><strong>Encargado:</strong> {s.encargado_servicio}</p>
+              <p><strong>Teléfono:</strong> {s.telefono_encargado}</p>
             </div>
           ))}
         </div>

@@ -28,7 +28,7 @@ export default function App() {
 
   const [tipos, setTipos] = useState([]);
   const [habitaciones, setHabitaciones] = useState([]);
-  const [servicios] = useState(serviciosIniciales);
+  const [servicios, setServicios] = useState(/*serviciosIniciales*/[]);
   const [huespedes, setHuespedes] = useState([]);
   const [reservas, setReservas] = useState([]);
 
@@ -37,6 +37,7 @@ export default function App() {
     fetchTipos();
     fetchHabitaciones();
     fetchReservas();
+    fetchServicios();
   }, []);
 
   const fetchHuespedes = async () => {
@@ -87,6 +88,19 @@ export default function App() {
       }else{
         setReservas(data);
         console.log('Reservas cargadas:', data);
+      }
+  }
+
+  const fetchServicios = async () => {
+    const { data, error } = await supabase
+      .from('servicio')
+      .select('*')
+
+      if(error){
+        console.log('Error: ', error)
+      }else{
+        setServicios(data);
+        console.log('Servicios cargados:', data);
       }
   }
   
@@ -185,6 +199,7 @@ export default function App() {
       id_habitacion: nuevaReserva.habitacionId,
       id_tipo_habitacion: nuevaReserva.tipoHabitacionId,
       id_checkin: null,
+      id_huesped_titular: nuevaReserva.huespedId
     }
 
     const { data, error } = await supabase
