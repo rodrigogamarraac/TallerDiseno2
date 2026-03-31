@@ -5,7 +5,7 @@ function obtenerNombreHuesped(huespedes, id) {
 
 function obtenerNumeroHabitacion(habitaciones, id) {
   const habitacion = habitaciones.find((h) => h.id_habitacion === id);
-  return habitacion ? habitacion.numero : "Sin habitación";
+  return habitacion ? habitacion.numero_habitacion : "Sin habitación";
 }
 
 function obtenerTipoHabitacion(tipos, id) {
