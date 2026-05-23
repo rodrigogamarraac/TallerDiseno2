@@ -313,7 +313,7 @@ export default function App() {
         return <PantallaServicios servicios={servicios} />;
 
       case "consultarHuesped":
-        return <PantallaConsultarHuesped huespedes={huespedes} />;
+        return <PantallaConsultarHuesped huespedes={huespedes} reservas={reservas} tipos={tipos} />;
 
       default:
         return (
