@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1779509217835" clover="3.2.0">
-  <project timestamp="1779509217835" name="All files">
-    <metrics statements="179" coveredstatements="37" conditionals="93" coveredconditionals="28" methods="65" coveredmethods="22" elements="337" coveredelements="87" complexity="0" loc="179" ncloc="179" packages="2" files="9" classes="9"/>
+<coverage generated="1779545921329" clover="3.2.0">
+  <project timestamp="1779545921330" name="All files">
+    <metrics statements="178" coveredstatements="38" conditionals="93" coveredconditionals="28" methods="64" coveredmethods="23" elements="335" coveredelements="89" complexity="0" loc="178" ncloc="178" packages="2" files="9" classes="9"/>
     <package name="src">
       <metrics statements="112" coveredstatements="0" conditionals="46" coveredconditionals="0" methods="16" coveredmethods="0"/>
       <file name="App.jsx" path="C:\Users\Hp\Videos\Taller\HotelGit\TallerDiseno2\src\App.jsx">
@@ -121,7 +121,7 @@
       </file>
     </package>
     <package name="src.components">
-      <metrics statements="67" coveredstatements="37" conditionals="47" coveredconditionals="28" methods="49" coveredmethods="22"/>
+      <metrics statements="66" coveredstatements="38" conditionals="47" coveredconditionals="28" methods="48" coveredmethods="23"/>
       <file name="FormularioHuesped.jsx" path="C:\Users\Hp\Videos\Taller\HotelGit\TallerDiseno2\src\components\FormularioHuesped.jsx">
         <metrics statements="10" coveredstatements="10" conditionals="6" coveredconditionals="6" methods="3" coveredmethods="3"/>
         <line num="22" count="52" type="stmt"/>
@@ -155,9 +155,8 @@
         <line num="126" count="7" type="stmt"/>
       </file>
       <file name="Inicio.jsx" path="C:\Users\Hp\Videos\Taller\HotelGit\TallerDiseno2\src\components\Inicio.jsx">
-        <metrics statements="2" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="0"/>
-        <line num="2" count="0" type="stmt"/>
-        <line num="4" count="0" type="stmt"/>
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="2" count="1" type="stmt"/>
       </file>
       <file name="ListaReservas.jsx" path="C:\Users\Hp\Videos\Taller\HotelGit\TallerDiseno2\src\components\ListaReservas.jsx">
         <metrics statements="12" coveredstatements="0" conditionals="10" coveredconditionals="0" methods="10" coveredmethods="0"/>
