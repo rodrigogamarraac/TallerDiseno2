@@ -1,5 +1,5 @@
 TN:
-SF:src/utilidades/utilidadesCalendario.js
+SF:src\utilidades\utilidadesCalendario.js
 FN:1,generarHorarios
 FN:14,crearFechaHora
 FN:18,convertirAFecha
