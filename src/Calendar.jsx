@@ -1,6 +1,12 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { DayPilot, DayPilotCalendar, DayPilotMonth } from "@daypilot/daypilot-lite-react";
 import { supabase } from "./supabaseClient.js";
+import {
+  generarHorarios,
+  horarioEstaLibre,
+  obtenerHorariosInicioDisponibles,
+  obtenerHorariosFinDisponibles,
+} from "./utilidades/utilidadesCalendario.js";
 
 export default function Calendar() {
   const [view, setView] = useState("Week");
@@ -63,62 +69,32 @@ export default function Calendar() {
   const BUSINESS_START = 8; // 08:00
   const BUSINESS_END = 20; // 20:00 (last start slot is 19:30)
 
-  const timeSlots = useMemo(() => {
-    const slots = [];
-    for (let h = BUSINESS_START; h < BUSINESS_END; h++) {
-      slots.push(`${String(h).padStart(2, "0")}:00`);
-      slots.push(`${String(h).padStart(2, "0")}:30`);
-    }
-    return slots;
-  }, []);
-
-  function toDpDate(dateStr, timeStr) {
-    return new DayPilot.Date(`${dateStr}T${timeStr}:00`);
-  }
-
-  function overlaps(aStart, aEnd, bStart, bEnd) {
-    return aStart < bEnd && aEnd > bStart;
-  }
-
-  function dayEvents(dateStr) {
-    const dayStart = new DayPilot.Date(`${dateStr}T00:00:00`);
-    const dayEnd = new DayPilot.Date(`${dateStr}T23:59:59`);
-
-    return events
-      .map((e) => ({
-        ...e,
-        startDp: new DayPilot.Date(e.start),
-        endDp: new DayPilot.Date(e.end),
-      }))
-      .filter((e) => overlaps(dayStart, dayEnd, e.startDp, e.endDp));
-  }
+  const timeSlots = useMemo(
+    () => generarHorarios(BUSINESS_START, BUSINESS_END),
+    []
+  );
 
   function isRangeFree(dateStr, startTime, endTime, ignoreId = null) {
-    const s = toDpDate(dateStr, startTime);
-    const e = toDpDate(dateStr, endTime);
-    if (!(e > s)) return false;
-
-    const existing = dayEvents(dateStr).filter((ev) => ev.id !== ignoreId);
-    return !existing.some((ev) => overlaps(s, e, ev.startDp, ev.endDp));
+    return horarioEstaLibre(events, dateStr, startTime, endTime, ignoreId);
   }
 
   function startSlotEnabled(slot) {
-    const idx = timeSlots.indexOf(slot);
-    if (idx === -1) return false;
-
-    for (let j = idx + 1; j < timeSlots.length; j++) {
-      const endSlot = timeSlots[j];
-      if (isRangeFree(apptDate, slot, endSlot, editingId)) return true;
-    }
-    return false;
+    return obtenerHorariosInicioDisponibles(
+      events,
+      apptDate,
+      timeSlots,
+      editingId
+    ).includes(slot);
   }
 
   function endSlotEnabled(slot) {
-    if (!apptStart) return false;
-    const startIdx = timeSlots.indexOf(apptStart);
-    const endIdx = timeSlots.indexOf(slot);
-    if (endIdx <= startIdx) return false;
-    return isRangeFree(apptDate, apptStart, slot, editingId);
+    return obtenerHorariosFinDisponibles(
+      events,
+      apptDate,
+      apptStart,
+      timeSlots,
+      editingId
+    ).includes(slot);
   }
 
   function openNuevaCita() {
