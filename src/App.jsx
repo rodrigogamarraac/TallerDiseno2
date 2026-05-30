@@ -12,6 +12,19 @@ import PantallaCheckIn from "./components/PantallaCheckIn";
 import PantallaServicios from "./components/PantallaServicios";
 import PantallaConsultarHuesped from "./components/PantallaConsultarHuesped";
 
+import {
+  validarFechasReserva,
+  validarCapacidadReserva,
+  existeSolapamientoReserva,
+} from "./logica/reservaLogica";
+
+import {
+  validarDatosHuesped,
+  existeDocumentoDuplicado,
+} from "./logica/huespedLogica";
+
+import { puedeHacerCheckIn } from "./logica/checkinLogica";
+
 export default function App() {
 
   //const [listaHuespedes, setListaHuespedes] = useState([]);
@@ -97,8 +110,14 @@ export default function App() {
   
   
   const registrarHuesped = async (nuevoHuesped) => {
-    const duplicado = huespedes.some(
-      (h) => h.numero_documento === nuevoHuesped.numeroDocumento
+    if (!validarDatosHuesped(nuevoHuesped)) {
+      alert("Debe completar los datos obligatorios del huésped.");
+      return;
+    }
+
+    const duplicado = existeDocumentoDuplicado(
+      huespedes,
+      nuevoHuesped.numeroDocumento
     );
 
     if (duplicado) {
@@ -148,25 +167,17 @@ export default function App() {
 
     const tipo = tipos.find((t) => t.id_tipo_habitacion === nuevaReserva.tipoHabitacionId);
 
-    if (nuevaReserva.fechaSalida <= nuevaReserva.fechaIngreso) {
+    if (!validarFechasReserva(nuevaReserva.fechaIngreso, nuevaReserva.fechaSalida)) {
       alert("La fecha de salida debe ser posterior a la fecha de ingreso.");
       return;
     }
 
-    if (nuevaReserva.cantidadPersonas > tipo.capacidad) {
+    if (!validarCapacidadReserva(nuevaReserva.cantidadPersonas, tipo.capacidad)) {
       alert("La cantidad de personas supera la capacidad de la habitación.");
       return;
     }
 
-    const haySolapamiento = reservas.some((r) => {
-      if (r.id_habitacion !== nuevaReserva.habitacionId) return false;
-      if (r.estado === "Cancelada") return false;
-
-      return (
-        nuevaReserva.fechaIngreso < r.fecha_salida &&
-        nuevaReserva.fechaSalida > r.fecha_ingreso
-      );
-    });
+    const haySolapamiento = existeSolapamientoReserva(nuevaReserva, reservas);
 
     if (haySolapamiento) {
       alert("La habitación ya está reservada en ese rango de fechas.");
@@ -218,18 +229,8 @@ export default function App() {
   const registrarCheckIn = async(idReserva) => {
     const reserva = reservas.find((r) => r.id_reserva === idReserva);
 
-    if (!reserva) {
-      alert("Reserva no encontrada.");
-      return;
-    }
-
-    if (reserva.estado === "Cancelada") {
-      alert("No se puede hacer check-in a una reserva cancelada.");
-      return;
-    }
-
-    if (reserva.hora_checkin) {
-      alert("La reserva ya tiene check-in registrado.");
+    if (!puedeHacerCheckIn(reserva)) {
+      alert("No se puede hacer check-in para esta reserva.");
       return;
     }
 

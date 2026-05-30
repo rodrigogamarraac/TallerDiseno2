@@ -1,0 +1,35 @@
+export function validarFechasReserva(fechaIngreso, fechaSalida) {
+  if (!fechaIngreso || !fechaSalida) {
+    return false;
+  }
+
+  const ingreso = new Date(fechaIngreso);
+  const salida = new Date(fechaSalida);
+
+  return salida > ingreso;
+}
+
+export function validarCapacidadReserva(cantidadPersonas, capacidadHabitacion) {
+  if (!cantidadPersonas || !capacidadHabitacion) {
+    return false;
+  }
+
+  return Number(cantidadPersonas) <= Number(capacidadHabitacion);
+}
+
+export function existeSolapamientoReserva(nuevaReserva, reservas) {
+  return reservas.some((reserva) => {
+    if (reserva.id_habitacion !== nuevaReserva.habitacionId) {
+      return false;
+    }
+
+    if (reserva.estado === "Cancelada") {
+      return false;
+    }
+
+    return (
+      nuevaReserva.fechaIngreso < reserva.fecha_salida &&
+      nuevaReserva.fechaSalida > reserva.fecha_ingreso
+    );
+  });
+}
