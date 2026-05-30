@@ -33,3 +33,17 @@ export function existeSolapamientoReserva(nuevaReserva, reservas) {
     );
   });
 }
+
+export function crearDatosReserva(nuevaReserva) {
+  return {
+    fecha_ingreso: nuevaReserva.fechaIngreso,
+    fecha_salida: nuevaReserva.fechaSalida,
+    cantidad_personas: nuevaReserva.cantidadPersonas,
+    estado: "Reservada",
+    hora_checkin: null,
+    hora_checkout: null,
+    id_habitacion: nuevaReserva.habitacionId,
+    id_tipo_habitacion: nuevaReserva.tipoHabitacionId,
+    id_huesped_titular: nuevaReserva.huespedId,
+  };
+}

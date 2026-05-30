@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import supabase from "../supabase";
+import { useState } from "react";
+
 
 export default function FormularioHuesped({ onGuardar }) {
   //const [listaHuespedes, setListaHuespedes] = useState([]);

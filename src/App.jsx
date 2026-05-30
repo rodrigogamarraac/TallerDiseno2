@@ -16,6 +16,7 @@ import {
   validarFechasReserva,
   validarCapacidadReserva,
   existeSolapamientoReserva,
+  crearDatosReserva,
 } from "./logica/reservaLogica";
 
 import {
@@ -35,14 +36,6 @@ export default function App() {
   const [servicios, setServicios] = useState(/*serviciosIniciales*/[]);
   const [huespedes, setHuespedes] = useState([]);
   const [reservas, setReservas] = useState([]);
-
-  useEffect(() => {
-    fetchHuespedes();
-    fetchTipos();
-    fetchHabitaciones();
-    fetchReservas();
-    fetchServicios();
-  }, []);
 
   const fetchHuespedes = async () => {
     const { data, error } = await supabase
@@ -107,6 +100,14 @@ export default function App() {
         console.log('Servicios cargados:', data);
       }
   }
+
+  useEffect(() => {
+    fetchHuespedes();
+    fetchTipos();
+    fetchHabitaciones();
+    fetchReservas();
+    fetchServicios();
+  }, []);
   
   
   const registrarHuesped = async (nuevoHuesped) => {
@@ -163,9 +164,11 @@ export default function App() {
     //setVista("consultarHuesped");
   }
 
-  const crearReserva = async(nuevaReserva) =>{
-
-    const tipo = tipos.find((t) => t.id_tipo_habitacion === nuevaReserva.tipoHabitacionId);
+  const crearReserva = async (nuevaReserva) => {
+    const tipo = tipos.find(
+      (tipoHabitacion) =>
+        tipoHabitacion.id_tipo_habitacion === nuevaReserva.tipoHabitacionId
+    );
 
     if (!validarFechasReserva(nuevaReserva.fechaIngreso, nuevaReserva.fechaSalida)) {
       alert("La fecha de salida debe ser posterior a la fecha de ingreso.");
@@ -184,47 +187,24 @@ export default function App() {
       return;
     }
 
-    /*const nueva = {
-      id: Date.now(),
-      ...nuevaReserva,
-      estado: "Reservada",
-      horaCheckIn: "",
-    };*/
-
-    const datosReserva = {
-      fecha_ingreso: nuevaReserva.fechaIngreso,
-      fecha_salida: nuevaReserva.fechaSalida,
-      cantidad_personas: nuevaReserva.cantidadPersonas,
-      estado: "Reservada",
-      hora_checkin: null,
-      hora_checkout: null,
-      id_habitacion: nuevaReserva.habitacionId,
-      id_tipo_habitacion: nuevaReserva.tipoHabitacionId,
-      // id_checkin: null,
-      id_huesped_titular: nuevaReserva.huespedId
-    }
+    const datosReserva = crearDatosReserva(nuevaReserva);
 
     const { data, error } = await supabase
-    .from('reserva')
-    .insert([datosReserva])
-    .select()
-    .single()
+      .from("reserva")
+      .insert([datosReserva])
+      .select()
+      .single();
 
-    console.log(datosReserva);
-    console.log(data);
-
-    if(error){
-      console.log('Error al cargar los datos de la reserva:', error);
+    if (error) {
+      console.log("Error al cargar los datos de la reserva:", error);
       alert("Error al registrar la reserva.");
-    }else{
-      setReservas([data, ...reservas]);
-      alert("Reserva registrada correctamente.");
+      return;
     }
 
-    // setReservas([...reservas, nueva]);
-    // alert("Reserva registrada correctamente.");
+    setReservas([data, ...reservas]);
+    alert("Reserva registrada correctamente.");
     setVista("reservas");
-  }
+  };
 
   const registrarCheckIn = async(idReserva) => {
     const reserva = reservas.find((r) => r.id_reserva === idReserva);
