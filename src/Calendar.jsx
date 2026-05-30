@@ -65,12 +65,9 @@ export default function Calendar() {
     })();
   }, []);
 
-  // Business hours (change if you want)
-  const BUSINESS_START = 8; // 08:00
-  const BUSINESS_END = 20; // 20:00 (last start slot is 19:30)
-
+  
   const timeSlots = useMemo(
-    () => generarHorarios(BUSINESS_START, BUSINESS_END),
+    () => generarHorarios(),
     []
   );
 

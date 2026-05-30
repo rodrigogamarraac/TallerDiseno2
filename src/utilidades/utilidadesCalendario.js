@@ -1,4 +1,9 @@
-export function generarHorarios(horaInicio = 8, horaFin = 20) {
+import {
+  HORA_INICIO_ATENCION,
+  HORA_FIN_ATENCION,
+} from "./constantesCalendario.js";
+
+export function generarHorarios(horaInicio = HORA_INICIO_ATENCION, horaFin = HORA_FIN_ATENCION) {
   const horarios = [];
 
   for (let hora = horaInicio; hora < horaFin; hora++) {
