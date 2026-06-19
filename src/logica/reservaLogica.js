@@ -1,3 +1,5 @@
+import { ESTADOS_RESERVA } from "./estadoReserva";
+
 export function validarFechasReserva(fechaIngreso, fechaSalida) {
   if (!fechaIngreso || !fechaSalida) {
     return false;
@@ -46,4 +48,15 @@ export function crearDatosReserva(nuevaReserva) {
     id_tipo_habitacion: nuevaReserva.tipoHabitacionId,
     id_huesped_titular: nuevaReserva.huespedId,
   };
+}
+
+export function obtenerReservasActivasYFuturas(reservas, fechaReferencia) {
+  const fechaBase = new Date(fechaReferencia);
+
+  return reservas
+    .filter((reserva) => reserva.estado !== ESTADOS_RESERVA.CANCELADA)
+    .filter((reserva) => new Date(reserva.fecha_salida) >= fechaBase)
+    .sort((reservaA, reservaB) => {
+      return new Date(reservaA.fecha_ingreso) - new Date(reservaB.fecha_ingreso);
+    });
 }
