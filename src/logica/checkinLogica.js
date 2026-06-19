@@ -1,9 +1,11 @@
+import { ESTADOS_RESERVA } from "./estadoReserva";
+
 export function puedeHacerCheckIn(reserva) {
   if (!reserva) {
     return false;
   }
 
-  if (reserva.estado === "Cancelada") {
+  if (reserva.estado === ESTADOS_RESERVA.CANCELADA) {
     return false;
   }
 
@@ -12,4 +14,11 @@ export function puedeHacerCheckIn(reserva) {
   }
 
   return true;
+}
+
+export function crearDatosCheckIn(fechaCheckIn = new Date()) {
+  return {
+    hora_checkin: fechaCheckIn.toISOString(),
+    estado: ESTADOS_RESERVA.EN_CURSO,
+  };
 }
