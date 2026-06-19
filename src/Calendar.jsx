@@ -6,6 +6,7 @@ import {
   horarioEstaLibre,
   obtenerHorariosInicioDisponibles,
   obtenerHorariosFinDisponibles,
+  validarSolicitudCita,
 } from "./utilidades/utilidadesCalendario.js";
 
 export default function Calendar() {
@@ -34,13 +35,14 @@ export default function Calendar() {
           `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
 
-  // ---- Modal state ----
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [apptTitle, setApptTitle] = useState("Nueva cita");
   const [apptDate, setApptDate] = useState(startDate.toString("yyyy-MM-dd"));
-  const [apptStart, setApptStart] = useState(null); // "HH:mm"
-  const [apptEnd, setApptEnd] = useState(null); // "HH:mm"
-  const [editingId, setEditingId] = useState(null); // null = creating, otherwise editing existing appointment
+  const [apptStart, setApptStart] = useState(null);
+  const [apptEnd, setApptEnd] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+
+  const [errorCita, setErrorCita] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -101,11 +103,13 @@ export default function Calendar() {
     setApptStart(null);
     setApptEnd(null);
     setIsModalOpen(true);
+    setErrorCita("");
   }
 
   function closeModal() {
     setIsModalOpen(false);
     setEditingId(null);
+    setErrorCita("");
   }
 
   function moveRange(direction) {
@@ -124,8 +128,20 @@ export default function Calendar() {
   }
 
   async function saveAppointment() {
-    if (!apptStart || !apptEnd) return;
-    if (!isRangeFree(apptDate, apptStart, apptEnd, editingId)) return;
+    const validacion = validarSolicitudCita(
+      events,
+      apptDate,
+      apptStart,
+      apptEnd,
+      editingId
+    );
+
+    if (!validacion.valida) {
+      setErrorCita(validacion.mensaje);
+      return;
+    }
+
+    setErrorCita("");
 
     const startISO = new Date(`${apptDate}T${apptStart}:00`).toISOString();
     const endISO = new Date(`${apptDate}T${apptEnd}:00`).toISOString();
@@ -134,10 +150,8 @@ export default function Calendar() {
       title: apptTitle?.trim() || "Nueva cita",
       start_time: startISO,
       end_time: endISO,
-      // user_id: userId, // only if your RLS policies require it
     };
 
-    // EDIT existing
     if (editingId) {
       const { data, error } = await supabase
         .from("appointments")
@@ -169,7 +183,6 @@ export default function Calendar() {
       return;
     }
 
-    // CREATE new
     const { data, error } = await supabase
       .from("appointments")
       .insert(payload)
@@ -194,21 +207,21 @@ export default function Calendar() {
   const canSave = !!apptStart && !!apptEnd && endSlotEnabled(apptEnd);
 
   function dpToLocalParts(value) {
-    // value can be string or DayPilot.Date
+    
     const s = typeof value === "string"
       ? value
-      : value.toString("yyyy-MM-ddTHH:mm:ss"); // DayPilot.Date -> string
+      : value.toString("yyyy-MM-ddTHH:mm:ss");
 
     return {
-      date: s.slice(0, 10),      // "YYYY-MM-DD"
-      time: s.slice(11, 16),     // "HH:mm"
+      date: s.slice(0, 10),
+      time: s.slice(11, 16),
     };
   }
 
   function openEditModalFromEvent(dpEvent) {
-    const data = dpEvent.data;         // DayPilot.Event.data
-    const id = dpEvent.id();           // event id
-    const title = dpEvent.text();      // event text
+    const data = dpEvent.data;
+    const id = dpEvent.id();
+    const title = dpEvent.text();
 
     const startParts = dpToLocalParts(data.start);
     const endParts = dpToLocalParts(data.end);
@@ -270,7 +283,7 @@ export default function Calendar() {
       </div>
 
       <div className="calendar-content">
-        {/* Day */}
+        
         <DayPilotCalendar
           viewType="Day"
           visible={view === "Day"}
@@ -302,7 +315,7 @@ export default function Calendar() {
         />
       </div>
 
-      {/* ---- Custom Modal ---- */}
+      
       {isModalOpen && (
         <div className="modal-backdrop" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -368,6 +381,8 @@ export default function Calendar() {
             </div>
 
             <div className="legend">...</div>
+
+            {errorCita && <div className="error-message">{errorCita}</div>}
 
             <div className="footer">
               {editingId && (
