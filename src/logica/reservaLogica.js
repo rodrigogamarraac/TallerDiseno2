@@ -20,19 +20,15 @@ export function validarCapacidadReserva(cantidadPersonas, capacidadHabitacion) {
 }
 
 export function existeSolapamientoReserva(nuevaReserva, reservas) {
-  return reservas.some((reserva) => {
-    if (reserva.id_habitacion !== nuevaReserva.habitacionId) {
-      return false;
-    }
+  return reservas.some((reservaExistente) => {
+    const esMismaHabitacion =
+      reservaExistente.id_habitacion === nuevaReserva.habitacionId;
 
-    if (reserva.estado === ESTADOS_RESERVA.CANCELADA) {
-      return false;
-    }
+    const estaCancelada = reservaExistente.estado === ESTADOS_RESERVA.CANCELADA;
 
-    return (
-      nuevaReserva.fechaIngreso < reserva.fecha_salida &&
-      nuevaReserva.fechaSalida > reserva.fecha_ingreso
-    );
+    const fechasSeCruzan = nuevaReserva.fechaIngreso < reservaExistente.fecha_salida && nuevaReserva.fechaSalida > reservaExistente.fecha_ingreso;
+
+    return esMismaHabitacion && !estaCancelada && fechasSeCruzan;
   });
 }
 
