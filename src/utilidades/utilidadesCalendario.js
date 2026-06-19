@@ -88,27 +88,34 @@ export function obtenerHorariosFinDisponibles(
     );
 }
 
-export function filtrarCitas(citas, filtros = {}) {
-  const { nombrePaciente, fecha } = filtros;
-
-  let filtroPaciente = "";
-
-  if (nombrePaciente) {
-    filtroPaciente = nombrePaciente.trim().toLowerCase();
+function normalizarTexto(valor) {
+  if (valor === null || valor === undefined) {
+    return "";
   }
 
+  return String(valor).trim().toLowerCase();
+}
+
+function coincideConPaciente(cita, filtroPaciente) {
+  if (!filtroPaciente) {
+    return true;
+  }
+
+  return normalizarTexto(cita.text).includes(filtroPaciente);
+}
+
+function coincideConFecha(cita, fecha) {
+  if (!fecha) {
+    return true;
+  }
+
+  return cita.start.slice(0, 10) === fecha;
+}
+
+export function filtrarCitas(citas, filtros = {}) {
+  const filtroPaciente = normalizarTexto(filtros.nombrePaciente);
+
   return citas.filter((cita) => {
-    let coincidePaciente = true;
-    let coincideFecha = true;
-
-    if (filtroPaciente !== "") {
-      coincidePaciente = cita.text.toLowerCase().includes(filtroPaciente);
-    }
-
-    if (fecha) {
-      coincideFecha = cita.start.slice(0, 10) === fecha;
-    }
-
-    return coincidePaciente && coincideFecha;
+    return coincideConPaciente(cita, filtroPaciente) && coincideConFecha(cita, filtros.fecha);
   });
 }
