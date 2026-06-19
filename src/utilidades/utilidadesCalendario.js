@@ -119,3 +119,30 @@ export function filtrarCitas(citas, filtros = {}) {
     return coincideConPaciente(cita, filtroPaciente) && coincideConFecha(cita, filtros.fecha);
   });
 }
+
+export function validarSolicitudCita(
+  citas,
+  fecha,
+  horaInicio,
+  horaFin,
+  idIgnorado = null
+) {
+  if (!horaInicio || !horaFin) {
+    return {
+      valida: false,
+      mensaje: "Debe seleccionar hora de inicio y fin",
+    };
+  }
+
+  if (!horarioEstaLibre(citas, fecha, horaInicio, horaFin, idIgnorado)) {
+    return {
+      valida: false,
+      mensaje: "El horario seleccionado no esta disponible",
+    };
+  }
+
+  return {
+    valida: true,
+    mensaje: "Horario disponible",
+  };
+}

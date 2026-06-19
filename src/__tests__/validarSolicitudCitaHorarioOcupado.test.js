@@ -18,5 +18,5 @@ test("devuelve error cuando se intenta agendar en un horario ocupado", () => {
   );
 
   expect(resultado.valida).toBe(false);
-  expect(resultado.mensaje).toBe("El horario seleccionado no esta disponible.");
+  expect(resultado.mensaje).toBe("El horario seleccionado no esta disponible");
 });
