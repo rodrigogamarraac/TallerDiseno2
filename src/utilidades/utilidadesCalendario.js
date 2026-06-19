@@ -91,14 +91,23 @@ export function obtenerHorariosFinDisponibles(
 export function filtrarCitas(citas, filtros = {}) {
   const { nombrePaciente, fecha } = filtros;
 
-  return citas.filter((cita) => {
-    const coincidePaciente = nombrePaciente
-      ? cita.text.toLowerCase().includes(nombrePaciente.toLowerCase())
-      : true;
+  let filtroPaciente = "";
 
-    const coincideFecha = fecha
-      ? cita.start.slice(0, 10) === fecha
-      : true;
+  if (nombrePaciente) {
+    filtroPaciente = nombrePaciente.trim().toLowerCase();
+  }
+
+  return citas.filter((cita) => {
+    let coincidePaciente = true;
+    let coincideFecha = true;
+
+    if (filtroPaciente !== "") {
+      coincidePaciente = cita.text.toLowerCase().includes(filtroPaciente);
+    }
+
+    if (fecha) {
+      coincideFecha = cita.start.slice(0, 10) === fecha;
+    }
 
     return coincidePaciente && coincideFecha;
   });
