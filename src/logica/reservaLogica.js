@@ -75,3 +75,10 @@ export function esTipoHabitacionValido(tiposHabitacion, tipoHabitacionId) {
       tipoHabitacion.id_tipo_habitacion === tipoHabitacionId
   );
 }
+
+export function obtenerTipoHabitacionSeleccionado(tiposHabitacion, tipoHabitacionId) {
+  return tiposHabitacion.find(
+    (tipoHabitacion) =>
+      tipoHabitacion.id_tipo_habitacion === tipoHabitacionId
+  );
+}

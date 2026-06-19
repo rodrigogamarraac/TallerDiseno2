@@ -17,6 +17,8 @@ import {
   validarCapacidadReserva,
   existeSolapamientoReserva,
   crearDatosReserva,
+  esTipoHabitacionValido,
+  obtenerTipoHabitacionSeleccionado,
 } from "./logica/reservaLogica";
 
 import {
@@ -165,9 +167,14 @@ export default function App() {
   }
 
   const crearReserva = async (nuevaReserva) => {
-    const tipo = tipos.find(
-      (tipoHabitacion) =>
-        tipoHabitacion.id_tipo_habitacion === nuevaReserva.tipoHabitacionId
+    if (!esTipoHabitacionValido(tipos, nuevaReserva.tipoHabitacionId)) {
+      alert("Debe seleccionar un tipo de habitación válido.");
+      return;
+    }
+
+    const tipoHabitacion = obtenerTipoHabitacionSeleccionado(
+      tipos,
+      nuevaReserva.tipoHabitacionId
     );
 
     if (!validarFechasReserva(nuevaReserva.fechaIngreso, nuevaReserva.fechaSalida)) {
@@ -175,7 +182,7 @@ export default function App() {
       return;
     }
 
-    if (!validarCapacidadReserva(nuevaReserva.cantidadPersonas, tipo.capacidad)) {
+    if (!validarCapacidadReserva(nuevaReserva.cantidadPersonas, tipoHabitacion.capacidad)) {
       alert("La cantidad de personas supera la capacidad de la habitación.");
       return;
     }
