@@ -25,7 +25,7 @@ export function existeSolapamientoReserva(nuevaReserva, reservas) {
       return false;
     }
 
-    if (reserva.estado === "Cancelada") {
+    if (reserva.estado === ESTADOS_RESERVA.CANCELADA) {
       return false;
     }
 
@@ -41,7 +41,7 @@ export function crearDatosReserva(nuevaReserva) {
     fecha_ingreso: nuevaReserva.fechaIngreso,
     fecha_salida: nuevaReserva.fechaSalida,
     cantidad_personas: nuevaReserva.cantidadPersonas,
-    estado: "Reservada",
+    estado: ESTADOS_RESERVA.RESERVADA,
     hora_checkin: null,
     hora_checkout: null,
     id_habitacion: nuevaReserva.habitacionId,
