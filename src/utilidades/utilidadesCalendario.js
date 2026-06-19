@@ -3,6 +3,8 @@ import {
   HORA_FIN_ATENCION,
 } from "./constantesCalendario.js";
 
+import { MENSAJES_VALIDACION_CITA } from "./mensajesCalendario.js";
+
 export function generarHorarios(horaInicio = HORA_INICIO_ATENCION, horaFin = HORA_FIN_ATENCION) {
   const horarios = [];
 
@@ -130,19 +132,19 @@ export function validarSolicitudCita(
   if (!horaInicio || !horaFin) {
     return {
       valida: false,
-      mensaje: "Debe seleccionar hora de inicio y fin",
+      mensaje: MENSAJES_VALIDACION_CITA.HORAS_INCOMPLETAS,
     };
   }
 
   if (!horarioEstaLibre(citas, fecha, horaInicio, horaFin, idIgnorado)) {
     return {
       valida: false,
-      mensaje: "El horario seleccionado no esta disponible",
+      mensaje: MENSAJES_VALIDACION_CITA.HORARIO_OCUPADO,
     };
   }
 
   return {
     valida: true,
-    mensaje: "Horario disponible",
+    mensaje: MENSAJES_VALIDACION_CITA.HORARIO_DISPONIBLE,
   };
 }
