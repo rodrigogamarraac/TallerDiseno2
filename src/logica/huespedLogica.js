@@ -15,3 +15,15 @@ export function existeDocumentoDuplicado(huespedes, numeroDocumento) {
     (huesped) => huesped.numero_documento === numeroDocumento
   );
 }
+
+export function crearDatosHuesped(nuevoHuesped) {
+  return {
+    nombre_completo: nuevoHuesped.nombreCompleto,
+    tipo_documento: nuevoHuesped.tipoDocumento,
+    numero_documento: nuevoHuesped.numeroDocumento,
+    telefono: nuevoHuesped.telefono,
+    correo: nuevoHuesped.correo,
+    fecha_nacimiento: nuevoHuesped.fechaNacimiento,
+    nacionalidad: nuevoHuesped.nacionalidad,
+  };
+}

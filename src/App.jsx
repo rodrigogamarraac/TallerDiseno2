@@ -24,6 +24,7 @@ import {
 import {
   validarDatosHuesped,
   existeDocumentoDuplicado,
+  crearDatosHuesped,
 } from "./logica/huespedLogica";
 
 import { puedeHacerCheckIn, crearDatosCheckIn } from "./logica/checkinLogica";
@@ -134,15 +135,7 @@ export default function App() {
       ...nuevoHuesped,
     };*/
 
-    const datosHuesped = {
-      nombre_completo: nuevoHuesped.nombreCompleto,
-      tipo_documento: nuevoHuesped.tipoDocumento,
-      numero_documento: nuevoHuesped.numeroDocumento,
-      telefono: nuevoHuesped.telefono,
-      correo: nuevoHuesped.correo,
-      fecha_nacimiento: nuevoHuesped.fechaNacimiento,
-      nacionalidad: nuevoHuesped.nacionalidad
-    }
+    const datosHuesped = crearDatosHuesped(nuevoHuesped);
 
     const { data, error } = await supabase
     .from('huesped')
