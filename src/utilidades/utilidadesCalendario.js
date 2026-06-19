@@ -148,3 +148,13 @@ export function validarSolicitudCita(
     mensaje: MENSAJES_VALIDACION_CITA.HORARIO_DISPONIBLE,
   };
 }
+
+export function reprogramarCitaEnLista(citas, citaReprogramada) {
+  return citas.map((cita) => {
+    if (cita.id === citaReprogramada.id) {
+      return citaReprogramada;
+    }
+
+    return cita;
+  });
+}
