@@ -50,13 +50,21 @@ export function crearDatosReserva(nuevaReserva) {
   };
 }
 
+function esReservaVigente(reserva, fechaBase) {
+  const noEstaCancelada = reserva.estado !== ESTADOS_RESERVA.CANCELADA;
+  const noFinalizo = new Date(reserva.fecha_salida) >= fechaBase;
+
+  return noEstaCancelada && noFinalizo;
+}
+
+function compararPorFechaIngreso(reservaA, reservaB) {
+  return new Date(reservaA.fecha_ingreso) - new Date(reservaB.fecha_ingreso);
+}
+
 export function obtenerReservasActivasYFuturas(reservas, fechaReferencia) {
   const fechaBase = new Date(fechaReferencia);
 
   return reservas
-    .filter((reserva) => reserva.estado !== ESTADOS_RESERVA.CANCELADA)
-    .filter((reserva) => new Date(reserva.fecha_salida) >= fechaBase)
-    .sort((reservaA, reservaB) => {
-      return new Date(reservaA.fecha_ingreso) - new Date(reservaB.fecha_ingreso);
-    });
+    .filter((reserva) => esReservaVigente(reserva, fechaBase))
+    .sort(compararPorFechaIngreso);
 }
