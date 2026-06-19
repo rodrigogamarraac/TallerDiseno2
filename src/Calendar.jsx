@@ -7,6 +7,7 @@ import {
   obtenerHorariosInicioDisponibles,
   obtenerHorariosFinDisponibles,
   validarSolicitudCita,
+  reprogramarCitaEnLista,
 } from "./utilidades/utilidadesCalendario.js";
 
 export default function Calendar() {
@@ -166,16 +167,12 @@ export default function Calendar() {
       }
 
       setEvents((prev) =>
-        prev.map((e) =>
-          e.id === editingId
-            ? {
-                ...e,
-                text: data.title,
-                start: isoToLocalNaive(data.start_time),
-                end: isoToLocalNaive(data.end_time),
-              }
-            : e
-        )
+        reprogramarCitaEnLista(prev, {
+          id: editingId,
+          text: data.title,
+          start: isoToLocalNaive(data.start_time),
+          end: isoToLocalNaive(data.end_time),
+        })
       );
 
       setIsModalOpen(false);
