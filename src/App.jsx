@@ -24,7 +24,7 @@ import {
   existeDocumentoDuplicado,
 } from "./logica/huespedLogica";
 
-import { puedeHacerCheckIn } from "./logica/checkinLogica";
+import { puedeHacerCheckIn, crearDatosCheckIn } from "./logica/checkinLogica";
 
 export default function App() {
 
@@ -226,7 +226,7 @@ export default function App() {
 
     const { data, error } = await supabase
       .from('reserva')
-      .update({ hora_checkin: new Date().toISOString(), estado: "En curso" })
+      .update(crearDatosCheckIn())
       .eq('id_reserva', idReserva)
       .select()
       .single();
