@@ -68,3 +68,10 @@ export function obtenerReservasActivasYFuturas(reservas, fechaReferencia) {
     .filter((reserva) => esReservaVigente(reserva, fechaBase))
     .sort(compararPorFechaIngreso);
 }
+
+export function esTipoHabitacionValido(tiposHabitacion, tipoHabitacionId) {
+  return tiposHabitacion.some(
+    (tipoHabitacion) =>
+      tipoHabitacion.id_tipo_habitacion === tipoHabitacionId
+  );
+}
