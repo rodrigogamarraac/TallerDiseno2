@@ -151,10 +151,17 @@ export function validarSolicitudCita(
 
 export function reprogramarCitaEnLista(citas, citaReprogramada) {
   return citas.map((cita) => {
-    if (cita.id === citaReprogramada.id) {
-      return citaReprogramada;
+    if (mismoId(cita.id, citaReprogramada.id)) {
+      return {
+        ...cita,
+        ...citaReprogramada,
+      };
     }
 
     return cita;
   });
+}
+
+function mismoId(idA, idB) {
+  return String(idA) === String(idB);
 }
